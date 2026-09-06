@@ -1,6 +1,11 @@
 <?php
 // M_Denifah_W - Standalone Non-Laravel Configuration
 
+// Aktifkan Output Buffering agar redirect header() tidak terhalang output awal
+if (!ob_get_level()) {
+    ob_start();
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     // Di Vercel serverless functions, gunakan /tmp/sessions agar tidak terkendala read-only permission
     if (!empty($_ENV['VERCEL']) || !empty(getenv('VERCEL')) || !empty($_SERVER['VERCEL'])) {
@@ -73,7 +78,7 @@ function get_flash(string $type): ?string {
 
 // Telegram Sending Function
 function send_telegram_raw(string $token, string $chatId, string $message): bool {
-    if (empty($token) || empty($chatId)) {
+    if (empty($token) || empty($chatId) || strpos($token, 'YOUR_') === 0 || strpos($chatId, 'YOUR_') === 0) {
         return false;
     }
 
@@ -92,7 +97,7 @@ function send_telegram_raw(string $token, string $chatId, string $message): bool
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    // Di PHP 8.0+, objek CurlHandle otomatis dibersihkan. curl_close() deprecated di PHP 8.5+
 
     return ($httpCode >= 200 && $httpCode < 300);
 }
@@ -102,12 +107,12 @@ function notify_account_registered(string $email): void {
     
     // Try registration bot first
     $sent = false;
-    if (defined('TELEGRAM_REGISTRATION_BOT_TOKEN') && TELEGRAM_REGISTRATION_BOT_TOKEN !== '') {
+    if (defined('TELEGRAM_REGISTRATION_BOT_TOKEN') && TELEGRAM_REGISTRATION_BOT_TOKEN !== '' && strpos(TELEGRAM_REGISTRATION_BOT_TOKEN, 'YOUR_') !== 0) {
         $sent = send_telegram_raw(TELEGRAM_REGISTRATION_BOT_TOKEN, TELEGRAM_CHAT_ID, $message);
     }
     
     // Fallback to contact bot if not sent
-    if (!$sent && defined('TELEGRAM_CONTACT_BOT_TOKEN') && TELEGRAM_CONTACT_BOT_TOKEN !== '') {
+    if (!$sent && defined('TELEGRAM_CONTACT_BOT_TOKEN') && TELEGRAM_CONTACT_BOT_TOKEN !== '' && strpos(TELEGRAM_CONTACT_BOT_TOKEN, 'YOUR_') !== 0) {
         send_telegram_raw(TELEGRAM_CONTACT_BOT_TOKEN, TELEGRAM_CHAT_ID, $message);
     }
 }

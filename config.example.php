@@ -2,6 +2,10 @@
 // M_Denifah_W - Standalone Configuration Template
 // Salin file ini menjadi config.php jika belum ada
 
+if (!ob_get_level()) {
+    ob_start();
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -75,7 +79,6 @@ function send_telegram_raw(string $token, string $chatId, string $message): bool
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     return ($httpCode >= 200 && $httpCode < 300);
 }
