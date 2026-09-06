@@ -25,11 +25,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         exit;
     } else {
         try {
-            $sent = notify_contact_message($name, $email, $message);
+            $errorDetail = null;
+            $sent = notify_contact_message($name, $email, $message, $errorDetail);
             if ($sent) {
                 set_flash('status', 'Pesan berhasil dikirim. Terima kasih sudah menghubungi saya.');
             } else {
-                set_flash('error', 'Pesan belum dapat dikirim. Periksa konfigurasi bot Telegram.');
+                $errorMsg = 'Pesan belum dapat dikirim. Periksa konfigurasi bot Telegram.';
+                if (!empty($errorDetail)) {
+                    $errorMsg .= ' (' . $errorDetail . ')';
+                }
+                set_flash('error', $errorMsg);
             }
         } catch (Throwable $e) {
             set_flash('error', 'Pesan belum dapat dikirim: ' . $e->getMessage());

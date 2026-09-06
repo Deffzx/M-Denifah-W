@@ -15,6 +15,9 @@ if (session_status() === PHP_SESSION_NONE) {
 // define('DATABASE_URL', 'YOUR_NEON_DATABASE_URL_HERE');
 
 // Telegram Bot Credentials (Ganti dengan token bot & Chat ID Anda)
+// Anda bisa menggunakan 1 token utama:
+// define('TELEGRAM_BOT_TOKEN', 'YOUR_BOT_TOKEN_HERE');
+// Atau pisahkan per bot:
 define('TELEGRAM_REGISTRATION_BOT_TOKEN', 'YOUR_REGISTRATION_BOT_TOKEN_HERE');
 define('TELEGRAM_CONTACT_BOT_TOKEN', 'YOUR_CONTACT_BOT_TOKEN_HERE');
 define('TELEGRAM_CHAT_ID', 'YOUR_CHAT_ID_HERE');

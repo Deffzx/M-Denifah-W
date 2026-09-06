@@ -23,17 +23,34 @@ if (file_exists(__DIR__ . '/config.local.php')) {
     require_once __DIR__ . '/config.local.php';
 }
 
+// Helper membaca environment variable dari getenv(), $_ENV, atau $_SERVER
+function get_app_env(string $key, ?string $default = null): ?string {
+    $val = getenv($key);
+    if ($val !== false && $val !== '') {
+        return $val;
+    }
+    if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+        return $_ENV[$key];
+    }
+    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+        return $_SERVER[$key];
+    }
+    return $default;
+}
+
 // Telegram Bot Credentials (Mendukung Vercel Environment Variables & config.local.php)
+$genericBotToken = get_app_env('TELEGRAM_BOT_TOKEN');
+
 if (!defined('TELEGRAM_REGISTRATION_BOT_TOKEN')) {
-    $envReg = getenv('TELEGRAM_REGISTRATION_BOT_TOKEN') ?: ($_ENV['TELEGRAM_REGISTRATION_BOT_TOKEN'] ?? 'YOUR_REGISTRATION_BOT_TOKEN');
+    $envReg = get_app_env('TELEGRAM_REGISTRATION_BOT_TOKEN', $genericBotToken ?: 'YOUR_REGISTRATION_BOT_TOKEN');
     define('TELEGRAM_REGISTRATION_BOT_TOKEN', $envReg);
 }
 if (!defined('TELEGRAM_CONTACT_BOT_TOKEN')) {
-    $envContact = getenv('TELEGRAM_CONTACT_BOT_TOKEN') ?: ($_ENV['TELEGRAM_CONTACT_BOT_TOKEN'] ?? 'YOUR_CONTACT_BOT_TOKEN');
+    $envContact = get_app_env('TELEGRAM_CONTACT_BOT_TOKEN', $genericBotToken ?: 'YOUR_CONTACT_BOT_TOKEN');
     define('TELEGRAM_CONTACT_BOT_TOKEN', $envContact);
 }
 if (!defined('TELEGRAM_CHAT_ID')) {
-    $envChatId = getenv('TELEGRAM_CHAT_ID') ?: ($_ENV['TELEGRAM_CHAT_ID'] ?? 'YOUR_CHAT_ID');
+    $envChatId = get_app_env('TELEGRAM_CHAT_ID', 'YOUR_CHAT_ID');
     define('TELEGRAM_CHAT_ID', $envChatId);
 }
 
@@ -76,9 +93,14 @@ function get_flash(string $type): ?string {
     return null;
 }
 
-// Telegram Sending Function
-function send_telegram_raw(string $token, string $chatId, string $message): bool {
-    if (empty($token) || empty($chatId) || strpos($token, 'YOUR_') === 0 || strpos($chatId, 'YOUR_') === 0) {
+// Telegram Sending Function dengan pelaporan detail error
+function send_telegram_raw(string $token, string $chatId, string $message, ?string &$errorDetail = null): bool {
+    if (empty($token) || strpos($token, 'YOUR_') === 0) {
+        $errorDetail = 'TELEGRAM_CONTACT_BOT_TOKEN atau TELEGRAM_BOT_TOKEN belum diatur';
+        return false;
+    }
+    if (empty($chatId) || strpos($chatId, 'YOUR_') === 0) {
+        $errorDetail = 'TELEGRAM_CHAT_ID belum diatur';
         return false;
     }
 
@@ -96,28 +118,40 @@ function send_telegram_raw(string $token, string $chatId, string $message): bool
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
     $response = curl_exec($ch);
+    $curlErr = curl_error($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    // Di PHP 8.0+, objek CurlHandle otomatis dibersihkan. curl_close() deprecated di PHP 8.5+
 
-    return ($httpCode >= 200 && $httpCode < 300);
+    if ($curlErr) {
+        $errorDetail = "cURL error: {$curlErr}";
+        return false;
+    }
+
+    $resJson = json_decode($response, true);
+    if ($httpCode >= 200 && $httpCode < 300 && !empty($resJson['ok'])) {
+        return true;
+    }
+
+    $desc = $resJson['description'] ?? "HTTP {$httpCode}";
+    $errorDetail = "Telegram API: {$desc}";
+    return false;
 }
 
-function notify_account_registered(string $email): void {
+function notify_account_registered(string $email, ?string &$errorDetail = null): void {
     $message = "Member Access: akun baru terdaftar\nEmail: {$email}";
     
-    // Try registration bot first
+    // Coba bot registrasi terlebih dahulu
     $sent = false;
     if (defined('TELEGRAM_REGISTRATION_BOT_TOKEN') && TELEGRAM_REGISTRATION_BOT_TOKEN !== '' && strpos(TELEGRAM_REGISTRATION_BOT_TOKEN, 'YOUR_') !== 0) {
-        $sent = send_telegram_raw(TELEGRAM_REGISTRATION_BOT_TOKEN, TELEGRAM_CHAT_ID, $message);
+        $sent = send_telegram_raw(TELEGRAM_REGISTRATION_BOT_TOKEN, TELEGRAM_CHAT_ID, $message, $errorDetail);
     }
     
-    // Fallback to contact bot if not sent
+    // Fallback ke contact bot jika belum terkirim
     if (!$sent && defined('TELEGRAM_CONTACT_BOT_TOKEN') && TELEGRAM_CONTACT_BOT_TOKEN !== '' && strpos(TELEGRAM_CONTACT_BOT_TOKEN, 'YOUR_') !== 0) {
-        send_telegram_raw(TELEGRAM_CONTACT_BOT_TOKEN, TELEGRAM_CHAT_ID, $message);
+        send_telegram_raw(TELEGRAM_CONTACT_BOT_TOKEN, TELEGRAM_CHAT_ID, $message, $errorDetail);
     }
 }
 
-function notify_contact_message(string $name, string $email, string $message): bool {
+function notify_contact_message(string $name, string $email, string $message, ?string &$errorDetail = null): bool {
     $formatted = "Member Access: pesan kontak baru\nNama: {$name}\nEmail: {$email}\nPesan:\n{$message}";
-    return send_telegram_raw(TELEGRAM_CONTACT_BOT_TOKEN, TELEGRAM_CHAT_ID, $formatted);
+    return send_telegram_raw(TELEGRAM_CONTACT_BOT_TOKEN, TELEGRAM_CHAT_ID, $formatted, $errorDetail);
 }
