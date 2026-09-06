@@ -8,27 +8,29 @@ $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
 $path = parse_url($requestUri, PHP_URL_PATH);
 $path = trim($path, '/');
 
-// 1. Fallback untuk file statis jika request dialihkan ke PHP
+// 1. Fallback untuk file statis jika request dialihkan ke PHP (CSS, JS, Fonts, Images)
 $staticFile = dirname(__DIR__) . '/' . $path;
 if (!empty($path) && file_exists($staticFile) && !is_dir($staticFile)) {
     $ext = strtolower(pathinfo($staticFile, PATHINFO_EXTENSION));
-    $mimes = [
-        'css'   => 'text/css',
-        'js'    => 'application/javascript',
-        'png'   => 'image/png',
-        'jpg'   => 'image/jpeg',
-        'jpeg'  => 'image/jpeg',
-        'gif'   => 'image/gif',
-        'svg'   => 'image/svg+xml',
-        'ico'   => 'image/x-icon',
-        'woff'  => 'font/woff',
-        'woff2' => 'font/woff2',
-        'ttf'   => 'font/ttf',
-    ];
-    if (isset($mimes[$ext])) {
-        header('Content-Type: ' . $mimes[$ext]);
-        readfile($staticFile);
-        exit;
+    if ($ext !== 'php') {
+        $mimes = [
+            'css'   => 'text/css',
+            'js'    => 'application/javascript',
+            'png'   => 'image/png',
+            'jpg'   => 'image/jpeg',
+            'jpeg'  => 'image/jpeg',
+            'gif'   => 'image/gif',
+            'svg'   => 'image/svg+xml',
+            'ico'   => 'image/x-icon',
+            'woff'  => 'font/woff',
+            'woff2' => 'font/woff2',
+            'ttf'   => 'font/ttf',
+        ];
+        if (isset($mimes[$ext])) {
+            header('Content-Type: ' . $mimes[$ext]);
+            readfile($staticFile);
+            exit;
+        }
     }
 }
 
@@ -55,11 +57,16 @@ $routes = [
     'logout.php'     => 'logout.php',
 ];
 
-$targetFile = $routes[$path] ?? null;
+// Cegah recursive loop jika path mengarah ke api/
+if ($path === 'api' || strpos($path, 'api/') === 0) {
+    $targetFile = 'index.php';
+} else {
+    $targetFile = $routes[$path] ?? null;
 
-// Jika file PHP langsung ada di root
-if (!$targetFile && !empty($path) && file_exists(dirname(__DIR__) . '/' . $path) && substr($path, -4) === '.php') {
-    $targetFile = $path;
+    // Jika file PHP langsung ada di root (bukan folder api)
+    if (!$targetFile && !empty($path) && file_exists(dirname(__DIR__) . '/' . $path) && substr($path, -4) === '.php') {
+        $targetFile = $path;
+    }
 }
 
 if ($targetFile && file_exists(dirname(__DIR__) . '/' . $targetFile)) {

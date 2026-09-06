@@ -6,6 +6,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Neon PostgreSQL Database Connection URL (Opsional, fallback otomatis ke SQLite jika kosong)
+// Format: postgresql://[user]:[password]@[endpoint].neon.tech/[dbname]?sslmode=require
+// define('DATABASE_URL', 'YOUR_NEON_DATABASE_URL_HERE');
+
 // Telegram Bot Credentials (Ganti dengan token bot & Chat ID Anda)
 define('TELEGRAM_REGISTRATION_BOT_TOKEN', 'YOUR_REGISTRATION_BOT_TOKEN_HERE');
 define('TELEGRAM_CONTACT_BOT_TOKEN', 'YOUR_CONTACT_BOT_TOKEN_HERE');
