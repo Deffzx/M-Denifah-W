@@ -101,7 +101,7 @@ require_once __DIR__ . '/includes/header.php';
                     <tbody class="divide-y divide-white/5">
                         <tr>
                             <td class="p-3">
-                                <img src="images/Tailwind.jpg" alt="Laravel Logo" class="w-9 h-9 object-contain group-hover:scale-105 transition-transform duration-200">
+                                <img src="images/Tailwind.jpg" alt="Tailwind CSS Logo" class="w-9 h-9 object-contain group-hover:scale-105 transition-transform duration-200">
                             </td>
                             <td class="p-3 font-semibold text-white">This Web</td>
                             <td class="p-3">Website Portfolio Pribadi untuk menampilkan project dan pengalaman saya</td>

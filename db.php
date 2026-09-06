@@ -3,7 +3,17 @@
 
 require_once __DIR__ . '/config.php';
 
-$dbFile = __DIR__ . '/database.sqlite';
+// Cek apakah berjalan di lingkungan Vercel atau serverless
+$isVercel = !empty($_ENV['VERCEL']) || !empty(getenv('VERCEL')) || !empty($_SERVER['VERCEL']);
+
+if ($isVercel) {
+    // Di Vercel, direktori root bersifat Read-Only.
+    // Gunakan folder /tmp yang memiliki izin tulis (writable).
+    $dbFile = sys_get_temp_dir() . '/database.sqlite';
+} else {
+    // Di Laragon / Local, simpan langsung di folder project
+    $dbFile = __DIR__ . '/database.sqlite';
+}
 
 try {
     $pdo = new PDO('sqlite:' . $dbFile);

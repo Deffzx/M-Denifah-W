@@ -1,0 +1,9 @@
+.git
+.gitignore
+README.md
+database.sqlite
+config.local.php
+config.example.php
+*.log
+.vscode
+.idea

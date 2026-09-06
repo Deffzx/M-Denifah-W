@@ -2,6 +2,14 @@
 // M_Denifah_W - Standalone Non-Laravel Configuration
 
 if (session_status() === PHP_SESSION_NONE) {
+    // Di Vercel serverless functions, gunakan /tmp/sessions agar tidak terkendala read-only permission
+    if (!empty($_ENV['VERCEL']) || !empty(getenv('VERCEL')) || !empty($_SERVER['VERCEL'])) {
+        $sessDir = sys_get_temp_dir() . '/sessions';
+        if (!is_dir($sessDir)) {
+            @mkdir($sessDir, 0777, true);
+        }
+        @session_save_path($sessDir);
+    }
     session_start();
 }
 
@@ -10,15 +18,18 @@ if (file_exists(__DIR__ . '/config.local.php')) {
     require_once __DIR__ . '/config.local.php';
 }
 
-// Telegram Bot Credentials (Fallback default jika tidak diset di config.local.php)
+// Telegram Bot Credentials (Mendukung Vercel Environment Variables & config.local.php)
 if (!defined('TELEGRAM_REGISTRATION_BOT_TOKEN')) {
-    define('TELEGRAM_REGISTRATION_BOT_TOKEN', 'YOUR_REGISTRATION_BOT_TOKEN');
+    $envReg = getenv('TELEGRAM_REGISTRATION_BOT_TOKEN') ?: ($_ENV['TELEGRAM_REGISTRATION_BOT_TOKEN'] ?? 'YOUR_REGISTRATION_BOT_TOKEN');
+    define('TELEGRAM_REGISTRATION_BOT_TOKEN', $envReg);
 }
 if (!defined('TELEGRAM_CONTACT_BOT_TOKEN')) {
-    define('TELEGRAM_CONTACT_BOT_TOKEN', 'YOUR_CONTACT_BOT_TOKEN');
+    $envContact = getenv('TELEGRAM_CONTACT_BOT_TOKEN') ?: ($_ENV['TELEGRAM_CONTACT_BOT_TOKEN'] ?? 'YOUR_CONTACT_BOT_TOKEN');
+    define('TELEGRAM_CONTACT_BOT_TOKEN', $envContact);
 }
 if (!defined('TELEGRAM_CHAT_ID')) {
-    define('TELEGRAM_CHAT_ID', 'YOUR_CHAT_ID');
+    $envChatId = getenv('TELEGRAM_CHAT_ID') ?: ($_ENV['TELEGRAM_CHAT_ID'] ?? 'YOUR_CHAT_ID');
+    define('TELEGRAM_CHAT_ID', $envChatId);
 }
 
 // Base URL helper

@@ -52,28 +52,46 @@ php -S localhost:8080
 ```
 Buka browser di `http://localhost:8080`.
 
+### Opsi 3: Deploy ke Vercel (Production)
+Website ini sudah dilengkapi konfigurasi serverless PHP untuk Vercel:
+1. Push repository ini ke GitHub.
+2. Buka [vercel.com](https://vercel.com) lalu klik **Add New...** &rarr; **Project**.
+3. Import repository **`M-Denifah-W`** dari akun GitHub Anda.
+4. Di bagian **Environment Variables** (opsional untuk bot Telegram), tambahkan:
+   - `TELEGRAM_REGISTRATION_BOT_TOKEN`: Token bot notifikasi registrasi Anda
+   - `TELEGRAM_CONTACT_BOT_TOKEN`: Token bot formulir kontak Anda
+   - `TELEGRAM_CHAT_ID`: ID Chat Telegram tujuan notifikasi
+5. Klik **Deploy**. Website portofolio langsung live dengan domain `*.vercel.app`!
+
 ---
 
 ## Struktur Folder & File
 
 ```
 M_Denifah_W/
+├── api/
+│   └── index.php         # Serverless Function Router untuk Vercel
+├── vercel.json           # Konfigurasi runtime PHP & rewrites Vercel
+├── .vercelignore         # Daftar file yang diabaikan saat deploy Vercel
 ├── config.php            # Konfigurasi Token Telegram, Session & Helper
-├── db.php                # Koneksi SQLite & inisialisasi tabel users
-├── index.php             # Halaman Beranda (Pengenalan / Hero / Portfolio preview)
+├── config.local.php      # Kredensial lokal sensitif (diabaikan Git)
+├── config.example.php    # Template konfigurasi tanpa token asli
+├── db.php                # Koneksi SQLite (otomatis detect local vs Vercel /tmp)
+├── index.php             # Halaman Beranda (Hero / Portfolio preview)
 ├── login.php             # Halaman Login
 ├── register.php          # Halaman Register
 ├── logout.php            # Handler Logout
 ├── about.php             # Halaman Tentang Saya (Khusus Member)
 ├── portofolio.php        # Halaman Portofolio Proyek (Khusus Member)
 ├── experience.php        # Halaman Pengalaman Kerja & Organisasi (Khusus Member)
-├── contact.php           # Halaman Formulir Kontak & Pengirim Telegram (Khusus Member)
+├── contact.php           # Halaman Formulir Kontak & Pengirim Telegram
 ├── includes/
 │   ├── header.php        # Navbar responsif, Alpine drawer, auth check, glow blob
 │   └── footer.php        # Glow blob penutup & script animasi
 ├── assets/               # CSS Tailwind, JS reveal observer, dan web fonts
 ├── images/               # Semua file gambar proyek
 ├── .htaccess             # Pengaturan rewrite Apache & MIME type font
+├── .gitignore            # File & folder yang diabaikan Git
 └── database.sqlite       # Database SQLite lokal (otomatis terbuat)
 ```
-#
+
